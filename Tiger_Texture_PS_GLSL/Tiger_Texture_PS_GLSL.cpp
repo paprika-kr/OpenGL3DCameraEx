@@ -35,6 +35,9 @@ float timestamp_background = 0.0f;
 float timestamp_background_temp = 0.0f;
 bool isDayOver = false;
 
+bool isAxisOn = true;
+bool isFloorOn = true;
+
 int isAnimationRun, flag_polygon_fill;
 int timestamp_tiger = 0;
 bool isTigerStandUp = true;
@@ -207,29 +210,34 @@ void display(void) {
 	r = timestamp_background / 1200.0f + 0.5f; g = timestamp_background / 3200.0f + 0.4f; b = timestamp_background / 4800.0f + 0.3f;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(r , g , b, 1.0f);
+
 	//Draw axes
-	glUseProgram(h_ShaderProgram_simple);
-	ModelViewMatrix = glm::scale(ViewMatrix, glm::vec3(100.0f, 100.0f, 100.0f));
-	ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
-	glUniformMatrix4fv(loc_ModelViewProjectionMatrix_simple, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-	glLineWidth(4.0f);
-	draw_axes();
-	glLineWidth(1.0f);
-
-	//Draw floor
+	if (isAxisOn) {
+		glUseProgram(h_ShaderProgram_simple);
+		ModelViewMatrix = glm::scale(ViewMatrix, glm::vec3(100.0f, 100.0f, 100.0f));
+		ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
+		glUniformMatrix4fv(loc_ModelViewProjectionMatrix_simple, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+		glLineWidth(4.0f);
+		draw_axes();
+		glLineWidth(1.0f);
+	}
 	glUseProgram(h_ShaderProgram_TXPS);
-  	set_material_floor();
-	glUniform1i(loc_texture, TEXTURE_ID_FLOOR);
-	ModelViewMatrix = glm::translate(ViewMatrix, glm::vec3(-500.0f, 0.0f, 500.0f));
-	ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-	ModelViewMatrix = glm::rotate(ModelViewMatrix, -90.0f*TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
-	ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
-	ModelViewMatrixInvTrans = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
+	//Draw floor
+	if (isFloorOn) {
+		set_material_floor();
+		glUniform1i(loc_texture, TEXTURE_ID_FLOOR);
+		ModelViewMatrix = glm::translate(ViewMatrix, glm::vec3(-500.0f, 0.0f, 500.0f));
+		ModelViewMatrix = glm::scale(ModelViewMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
+		ModelViewMatrix = glm::rotate(ModelViewMatrix, -90.0f * TO_RADIAN, glm::vec3(1.0f, 0.0f, 0.0f));
+		ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
+		ModelViewMatrixInvTrans = glm::inverseTranspose(glm::mat3(ModelViewMatrix));
 
-	glUniformMatrix4fv(loc_ModelViewProjectionMatrix_TXPS, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
-	glUniformMatrix4fv(loc_ModelViewMatrix_TXPS, 1, GL_FALSE, &ModelViewMatrix[0][0]);
-	glUniformMatrix3fv(loc_ModelViewMatrixInvTrans_TXPS, 1, GL_FALSE, &ModelViewMatrixInvTrans[0][0]);
-	draw_floor();
+		glUniformMatrix4fv(loc_ModelViewProjectionMatrix_TXPS, 1, GL_FALSE, &ModelViewProjectionMatrix[0][0]);
+		glUniformMatrix4fv(loc_ModelViewMatrix_TXPS, 1, GL_FALSE, &ModelViewMatrix[0][0]);
+		glUniformMatrix3fv(loc_ModelViewMatrixInvTrans_TXPS, 1, GL_FALSE, &ModelViewMatrixInvTrans[0][0]);
+		draw_floor();
+	}
+	
 
 	//1~4 : Dynamic Objects [tiger/wolf/spider/dragon]
 	//5~9 : Static Objects [godzilla/bus/bike/tank/optimus]
@@ -685,6 +693,28 @@ void keyboard(unsigned char key, int x, int y) {
 		}
 		else
 			fprintf(stdout, "Animation mode OFF.\n");
+		break;
+
+	case 'r': //Axis on/off
+		if (isAxisOn) {
+			printf("Axis OFF\n");
+			isAxisOn = false;
+		}
+		else {
+			printf("Axis ON\n");
+			isAxisOn = true;
+		}
+		break;
+
+	case 't': //Floor on/off
+		if (isFloorOn) {
+			printf("Floor OFF\n");
+			isFloorOn = false;
+		}
+		else {
+			printf("Floor ON\n");
+			isFloorOn = true;
+		}
 		break;
 
 	case 'z': //tiger stop
@@ -1192,7 +1222,7 @@ void main(int argc, char *argv[]) {
 
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	fprintf(stdout, " - Cam choice : Cam#1 : numkey 1 / Cam#2 : numkey 2 / Cam#3 : numkey 3 / Cam#4 : numkey 4 / Cam#5 : numkey 0\n");
-	fprintf(stdout, " - On Cam#1 : control by mouse motion during clickin left button");
+	fprintf(stdout, " - On Cam#1 : control by mouse motion during clickin left button\n");
 	fprintf(stdout, " - On Cam#5 : moving 'w', 's', 'a', 'd', 'q', 'e'\n");
 	fprintf(stdout, " - On Cam#5 : control by moving horizontally the mouse during clickin left button\n");
 	fprintf(stdout, " - On Cam#5 : change parameter of mouse motion : 'f'\n");
